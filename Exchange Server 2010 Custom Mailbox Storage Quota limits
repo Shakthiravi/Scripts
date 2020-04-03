@@ -1,0 +1,45 @@
+#################################################### 
+ 
+#Set Custom Mailbox Storage Quota limits
+#Author:Ravikumar Sathyamurthy 
+#Contact:rkexchange@outlook.com 
+
+##################################################### 
+
+#Setting custom Quota limits for User Mailboxes in Exchange 2010
+
+#Change Recipient Type according to the Mailbox type required
+
+#Generating the report of user mailboxes and exporting the data to csv for input and reporting
+
+Get-mailbox -Resultsize Unlimited | where{$_.RecipientTypeDetails -eq "Usermailbox"} | select Name | Export-csv c:\Usermailbox.csv -notype
+
+Import-csv "C:\Usermailbox.csv" |foreach{
+
+$Name = $_.Name
+
+$mbx = Get-mailboxStatistics $Name | select TotalitemSize
+
+#Quota limit values need to be set only by KB so convert the values to KB
+
+#Get current size or old size 
+
+$oldsize = $Mbx.TotalitemSize.value.tokB()*1024
+
+#New limits to set, for example increasing the mailbox limit from current size plus 500 MB
+
+#ProhibitSendQuota current size plus 500 MB
+
+$ps= $oldsize + 512000*1024
+
+#IssueWarningQuota when quota limit reaches current size plus 420 MB 
+
+$pw= $oldsize + 430080*1024
+
+#ProhibitSendReceiveQuota when Quota limit reaches current size plus 550 MB
+
+$psr= $oldsize + 563200*1024
+
+Set-Mailbox -Identity $Name -IssueWarningQuota $pw -ProhibitSendQuota $ps -ProhibitSendReceiveQuota $psr -UseDatabaseQuotaDefaults $false
+
+}
