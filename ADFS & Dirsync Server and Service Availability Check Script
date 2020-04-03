@@ -1,0 +1,189 @@
+#####################################################
+
+#Critical Servers and Services Status Report
+#Author:Ravikumar Sathyamurthy
+#Contact:rkexchange@outlook.com
+
+#####################################################
+
+$ServerName = "ADFSN1","ADFSN2","ADFSN3","ADFSP1","ADFSP2","DSYN"
+$ServerName2 = "ADFSN1","ADFSN2","ADFSN3"
+$ServerName3 = "DSYN"
+$STR += '<!-- saved from url=(0014)about:internet --><html><head><title> Output Generated on: ' + $(get-date).ToString() + '</title><style TYPE="text/css">'
+$STR += '<style>'
+$STR += '<!-- '
+$STR += 'body { font: Tahoma } '
+$STR += 'table { font: 10pt Tahoma; border: 1px} '
+$STR += 'td { border: 1px solid black; padding-left: 1px; padding-right: 1px } '
+$STR += 'p.header { font: 11pt Verdana; color: DarkBlue }'
+$STR += 'p.normal { font: 10pt Tahoma; }'
+$STR += '-->'
+$STR += '</style>'
+$STR += '</head>'
+$STR += '<body>'
+$STR += "<p class=`"header`" align='center'><strong>Critial Server Availability Status Report on : " + $(get-date).toshortdatestring() + " at : " + $(get-date).ToshorttimeString() # + " on machine $(hostname) </strong></p>"
+
+$STR += '<table width=80% align=center>'
+                
+        $STR += '<tr><td align="Left" style="background-color: darkblue" width="30%"><p class="table" style="color: white"><b><center>Server Name</b></center></p></td>'
+        
+        $STR += '<td align="Center" style="background-color: darkblue" width="10%"><p class="table" style="color: white"><b>Status </b></p></td></tr>'
+
+foreach ($Server in $ServerName) { 
+
+                    if (test-Connection -ComputerName $Server -Count 2 -Quiet ) 
+{  
+
+$status = "Up"                        
+$STR += '<tr><td align="Center" border = "black">' + $Server + "</td>"
+$STR += '<td align="Center" style="color: Green">' + $status + "</td></tr>"
+
+
+                            } 
+
+else { 
+
+$status1 = "Down"
+$STR += '<tr><td align="Center" border = "black">' + $Server + "</td>"
+$STR += '<td align="Center" style="color: Red">' + $status1 + "</td></tr>"
+ 
+                            }  
+  
+         
+} 
+
+$STR1 += '<!-- saved from url=(0014)about:internet --><html><head><title> Output Generated on: ' + $(get-date).ToString() + '</title><style TYPE="text/css">'
+$STR1 += '<style>'
+$STR1 += '<!-- '
+$STR1 += 'body { font: Tahoma } '
+$STR1 += 'table { font: 10pt Tahoma; border: 1px} '
+$STR1 += 'td { border: 1px solid black; padding-left: 1px; padding-right: 1px } '
+$STR1 += 'p.header { font: 11pt Verdana; color: DarkBlue }'
+$STR1 += 'p.normal { font: 10pt Tahoma; }'
+$STR1 += '-->'
+$STR1 += '</style>'
+$STR1 += '</head>'
+$STR1 += '<body>'
+
+$STR1 += "<p class=`"header`" align='center'><strong>ADFS\DirSync Server Critical Services Availability Status Report on : " + $(get-date).toshortdatestring() + " at : " + $(get-date).ToshorttimeString() # + " on machine $(hostname) </strong></p>"
+
+$STR1 += '<table width=80% align=center>'
+                
+        $STR1 += '<tr><td align="Left" style="background-color: darkblue" width="30%"><p class="table" style="color: white"><b><center>Server Name</b></center></p></td>'
+        
+        $STR1 += '<td align="Center" style="background-color: darkblue" width="10%"><p class="table" style="color: white"><b>Service Name </b></p></td>'
+
+$STR1 += '<td align="Center" style="background-color: darkblue" width="10%"><p class="table" style="color: white"><b>Status</b></p></td></tr>'
+
+foreach ($Server in $ServerName2) { 
+
+                    if (Get-Service -ComputerName $Server -Name adfssrv | Where{$_.Status -eq "Running"})
+
+
+{  
+
+$status = "Running"
+$Service = "adfssrv"
+                      
+$STR1 += '<tr><td align="Center" border = "black">' + $Server + "</td>"
+$STR1 += '<td align="Center" border = "black">' + $Service + "</td>"
+$STR1 += '<td align="Center" style="color: Green">' + $status + "</td></tr>"
+
+
+                            } 
+
+else { 
+
+$status1 = "Down"
+$Service = "adfssrv"
+
+$STR1 += '<tr><td align="Center" border = "black">' + $Server + "</td>"
+$STR1 += '<td align="Center" border = "black">' + $Service + "</td>"
+$STR1 += '<td align="Center" style="color: Red">' + $status1 + "</td></tr>"
+ 
+                            }  
+  
+         
+} 
+
+foreach ($Server in $ServerName3) { 
+
+                    if (Get-Service -ComputerName $Server -Name MSOnlineSyncScheduler | Where{$_.Status -eq "Running"})
+
+
+{  
+
+$status = "Running"
+$Service = "MSOnlineSyncScheduler"
+                      
+$STR1 += '<tr><td align="Center" border = "black">' + $Server + "</td>"
+$STR1 += '<td align="Center" border = "black">' + $Service + "</td>"
+$STR1 += '<td align="Center" style="color: Green">' + $status + "</td></tr>"
+
+
+                            } 
+
+else { 
+
+$status1 = "Down"
+$Service = "MSOnlineSyncScheduler"
+
+$STR1 += '<tr><td align="Center" border = "black">' + $Server + "</td>"
+$STR1 += '<td align="Center" border = "black">' + $Service + "</td>"
+$STR1 += '<td align="Center" style="color: Red">' + $status1 + "</td></tr>"
+ 
+                            }  
+  
+         
+} 
+
+foreach ($Server in $ServerName3) { 
+
+                    if (Get-Service -ComputerName $Server -Name FIMSynchronizationService | Where{$_.Status -eq "Running"})
+
+
+{  
+
+$status = "Running"
+$Service = "FIMSynchronizationService"
+                      
+$STR1 += '<tr><td align="Center" border = "black">' + $Server + "</td>"
+$STR1 += '<td align="Center" border = "black">' + $Service + "</td>"
+$STR1 += '<td align="Center" style="color: Green">' + $status + "</td></tr>"
+
+
+                            } 
+
+else { 
+
+$status1 = "Down"
+$Service = "FIMSynchronizationService"
+
+$STR1 += '<tr><td align="Center" border = "black">' + $Server + "</td>"
+$STR1 += '<td align="Center" border = "black">' + $Service + "</td>"
+$STR1 += '<td align="Center" style="color: Red">' + $status1 + "</td></tr>"
+ 
+                            }  
+
+         
+} 
+
+$STR += '</table><br>'
+$STR1 += '</table><br>'
+    
+
+$STR += '</p></body></html>'
+$STR1 += '</p></body></html>'
+
+
+$smtpServer = "SMTPServerFQDN"
+$msg = new-object Net.Mail.MailMessage
+$smtp = new-object Net.Mail.SmtpClient($smtpServer)
+$msg.From = “ServerAvailabilitystatus@Domain.com”
+$msg.to.add("Admin@Domain.com")
+$msg.IsBodyHTML = $true   
+$msg.Subject = 'Critical Server & Services Availablity Status Report'
+$msg.Body = $STR
+$msg.Body += $STR1
+$msg.Priority = [System.Net.Mail.MailPriority]::High
+$smtp.Send($msg)
