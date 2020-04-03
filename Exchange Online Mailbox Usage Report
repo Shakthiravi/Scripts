@@ -1,0 +1,117 @@
+#####################################################
+
+#Exchange On premises / Exchange Online Mailbox Usage report
+#Author:Ravikumar Sathyamurthy
+#Contact:rkexchange@outlook.com
+
+#Same script can be used to obtain report for both Exchange On premises and Exchange Online
+
+#When obtaining the report for Exchane Online, connect to Exchange Online remote powershell and invoke the script
+
+#####################################################
+
+#Exclude the below cmd let when you run the report for Exchange Online
+
+set-adserversettings -viewentireforest:$true
+
+$Currentdate = get-date -format g
+
+
+Get-mailbox -resultsize unlimited |Select PrimarySMTPAddress | Export-csv c:\Temp\Mbxlist.csv -Notype -ErrorAction SilentlyContinue
+
+write-host "MBX report Generated"
+
+$Reports=@()
+
+Import-csv "C:\Temp\Mbxlist.csv" |
+
+foreach {
+
+$Name = $_.PrimarySMTPAddress
+
+$Rpt = Get-mailbox $Name | select Name, DisplayName, alias, RecipientTypeDetails, PrimarySmtpAddress, ServerName, Database, HiddenFromAddressListsEnabled, ProhibitSendQuota,ProhibitSendReceiveQuota, IssueWarningQuota, UseDatabaseQuotaDefaults, UseDatabaseRetentionDefaults, ExchangeGuid 
+
+$Reports=$Reports+$Rpt
+
+$Reports | Export-csv data1.csv -Notype -ErrorAction SilentlyContinue
+
+}
+
+write-host "MBX Quota report Generated"
+
+$Reports1=@()
+
+Import-csv "C:\Temp\Mbxlist.csv" |
+
+foreach {
+
+$Name = $_.PrimarySMTPAddress
+
+$Rpt1 = Get-MailboxStatistics $Name | Select DisplayName,StorageLimitStatus,@{name="TotalItemSize (MB)";expression={[math]::Round((($_.TotalItemSize.Value.ToString()).Split("(")[1].Split(" ")[0].Replace(",","")/1MB),2)}},@{name="TotalDeletedItemSize (MB)";expression={[math]::Round((($_.TotalDeletedItemSize.Value.ToString()).Split("(")[1].Split(" ")[0].Replace(",","")/1MB),2)}},ItemCount,DeletedItemCount,MailboxGuid, LastLogonTime 
+
+$Reports1=$Reports1+$Rpt1
+
+$Reports1 | Export-csv data2.csv -Notype -ErrorAction SilentlyContinue
+
+}
+
+write-host "MBX Statistics report Generated"
+
+write-host "Merging Mailbox Quota report and Statistics report " -f Cyan
+$d1 = ipcsv Data1.csv
+$d2 = ipcsv Data2.csv
+$new = $( foreach($d in $d2)
+{ 	
+	$t = $d1 | Where-Object {$_.ExchangeGuid -eq $d.MailboxGuid }
+	$t1 = $d | select *
+	foreach ($p in Get-Member -InputObject $t -MemberType NoteProperty)
+	{
+		Add-Member -InputObject $t1 -MemberType NoteProperty -Name $p.Name -Value $t.$($p.Name) -Force 
+		$t.$($p.Name) = $t1.$($p.Name)
+	}
+		$t1
+}
+)
+$new | Export-Csv C:\Temp\Mergedrpt.csv -Notype -ErrorAction SilentlyContinue
+
+write-host "Generating the Final Report"
+
+$Final = Import-Csv "C:\Temp\Mergedrpt.csv"
+
+#Customize your selection according to your requirement for the report
+
+$REP = $Final | Select Name, DisplayName, Alias, RecipientTypeDetails, PrimarySmtpAddress, ServerName, Database, HiddenFromAddressListsEnabled, ProhibitSendQuota,ProhibitSendReceiveQuota, IssueWarningQuota, UseDatabaseQuotaDefaults, UseDatabaseRetentionDefaults,_TotalMailboxSizeMB,_TotalItemSizeMB,@{name="_MBUsagePercentage";expression={"{0:P0}" -f ($_._TotalItemSizeMB/$_._TotalMailboxSizeMB)}},StorageLimitStatus,LastLogonTime
+
+$REP | Export-Csv C:\Temp\MailboxUsagerpt.csv -Notype -ErrorAction SilentlyContinue
+
+write-host "Mailbox Usage report completed"
+
+#Emailing the report to Admin
+
+$file = "C:\Temp\MailboxUsagerpt.csv"
+
+$smtpServer = "SMTP Server FQDN"
+
+$att = new-object Net.Mail.Attachment($file)
+
+$msg = new-object Net.Mail.MailMessage
+
+$smtp = new-object Net.Mail.SmtpClient($smtpServer)
+
+$msg.From = "mbxrpt@domain.com"
+
+$msg.To.Add("Admin@domain.com")
+
+$msg.Subject = "Exchange Online mailbox Usage Report" + $Currentdate
+
+#$msg.Subject = "Exchange Onpremises mailbox Usage Report" + $Currentdate
+
+$msg.body = "pls find the attached Report"
+
+$msg.Attachments.Add($att)
+
+$smtp.Send($msg)
+
+$att.Dispose()
+
+write-host "Task completed"
